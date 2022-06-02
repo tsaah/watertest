@@ -15,8 +15,8 @@ struct Texture2D final {
         stbi_set_flip_vertically_on_load(true);
 
         // u8* image = stbi_load("textures/HuffmanPatterson_Figure1.png", &w, &h, &comp, STBI_default);
-        u16* image = stbi_load_16("textures/gebco_21600x10800_16bit_0_0.png", &w, &h, &comp, STBI_default);
-        // u16* image = stbi_load_16("textures/gebco_4096x2048_16bit_0_0.png", &w, &h, &comp, STBI_default);
+        // u16* image = stbi_load_16("textures/gebco_21600x10800_16bit_0_0.png", &w, &h, &comp, STBI_default);
+        u16* image = stbi_load_16("textures/gebco_4096x2048_16bit_0_0.png", &w, &h, &comp, STBI_default);
         // u8* image = stbi_load("textures/gebco_4096x2048_8bit_0_0.png", &w, &h, &comp, STBI_default);
 
         if(image == nullptr)
