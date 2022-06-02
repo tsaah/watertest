@@ -222,9 +222,16 @@ private:
         ImGui_ImplOpenGL3_Init("#version 330 core");
         ImGui::StyleColorsClassic();
 
-        program_.create({
-            Shader{ "shaders/default.vert", Shader::Type::Vertex },
-            Shader{ "shaders/default.frag", Shader::Type::Fragment }
+        // program_.create({
+        //     Shader{ "shaders/default.vert", Shader::Type::Vertex },
+        //     Shader{ "shaders/default.frag", Shader::Type::Fragment },
+        // });
+
+        planetProgram_.create({
+            Shader{ "shaders/planet.vert", Shader::Type::Vertex },
+            Shader{ "shaders/planet.tesc", Shader::Type::TesselationContrl },
+            Shader{ "shaders/planet.tese", Shader::Type::TesselationEvaluation },
+            Shader{ "shaders/planet.frag", Shader::Type::Fragment },
         });
 
 
@@ -236,8 +243,8 @@ private:
         camera_.setSize(1400, 600);
 
         GLuint binding = 0;
-        GLuint location = glGetUniformBlockIndex(program_, "CameraBlock");
-        glUniformBlockBinding(program_, location, binding);
+        GLuint location = glGetUniformBlockIndex(planetProgram_, "CameraBlock");
+        glUniformBlockBinding(planetProgram_, location, binding);
         cameraUniformBlock_.create(binding, camera_);
 
         glClearColor(0.29f, 0.3f, 0.38f, 1.0f);
@@ -246,8 +253,8 @@ private:
 
         glPointSize(5.0f);
 
-        quad_.create();
-        planet_.init(2000);
+        // quad_.create();
+        planet_.init(200);
 
         t_.load("textures/gebco_2021_tid_n0.0_s-90.0_w-90.0_e0.0.tif");
 
@@ -260,19 +267,29 @@ private:
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        program_.bind();
-        cameraUniformBlock_.bind();
+        planetProgram_.bind();
+        // program_.bind();
         t_.bind(0);
-        const auto tex0Location = glGetUniformLocation(program_, "tex0");
+        cameraUniformBlock_.bind();
+        const auto tex0Location = glGetUniformLocation(planetProgram_, "tex0");
         glUniform1i(tex0Location, 0);
-        const auto seaLevelLocation = glGetUniformLocation(program_, "seaLevel");
+        const auto seaLevelLocation = glGetUniformLocation(planetProgram_, "seaLevel");
         glUniform1f(seaLevelLocation, seaLevel_);
 
         planet_.draw();
+
+        // program_.bind();
+
+        // const auto tex0Location = glGetUniformLocation(program_, "tex0");
+        // glUniform1i(tex0Location, 0);
+        // const auto seaLevelLocation = glGetUniformLocation(program_, "seaLevel");
+        // glUniform1f(seaLevelLocation, seaLevel_);
+
+        // planet_.draw();
         // quad_.draw();
 
         cameraUniformBlock_.unbind();
-        program_.unbind();
+        planetProgram_.unbind();
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -293,8 +310,10 @@ private:
 
         if (wireframe_) {
             glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+            glDisable(GL_CULL_FACE);
         } else {
             glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+            glEnable(GL_CULL_FACE);
         }
 
         const auto cameraMoveAmmount = cameraMoveSpeed_ * dt_;
@@ -348,6 +367,7 @@ private:
 
     GLFWwindow* window_{ nullptr };
     Program program_;
+    Program planetProgram_;
     Camera camera_;
     UniformBuffer cameraUniformBlock_;
 

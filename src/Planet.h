@@ -48,39 +48,41 @@ struct Planet final {
                 for (int x{ 0 }; x <= resolution_; ++x) {
                     const auto i = x + y * (resolution_ + 1);
                     auto& position = mesh_.vertices[i].position;
-                    auto& normal = mesh_.vertices[i].normal;
+                    // auto& normal = mesh_.vertices[i].normal;
                     const v2 percent{ v2{ x, y } / static_cast<f32>(resolution_) };
-                    const v3 pointOnUnitCube{ localUp_ + (percent.x - 0.5f) * 2.0f * axisA_ + (percent.y - 0.5f) * 2.0f * axisB_ };
-                    const v3 t{
-                        pointOnUnitCube.x * pointOnUnitCube.x,
-                        pointOnUnitCube.y * pointOnUnitCube.y,
-                        pointOnUnitCube.z * pointOnUnitCube.z
-                    };
-                    const v3 pointOnUnitSphere{
-                        pointOnUnitCube.x * sqrt(1.0f - (t.y + t.z) / 2.0f + (t.y * t.z) / 3),
-                        pointOnUnitCube.y * sqrt(1.0f - (t.z + t.x) / 2.0f + (t.z * t.x) / 3),
-                        pointOnUnitCube.z * sqrt(1.0f - (t.x + t.y) / 2.0f + (t.x * t.y) / 3)
-                    };
-                    position = pointOnUnitSphere;
-                    normal = glm::normalize(pointOnUnitSphere);
+                    // const v3 pointOnUnitCube{ localUp_ + (percent.x - 0.5f) * 2.0f * axisA_ + (percent.y - 0.5f) * 2.0f * axisB_ };
+                    // const v3 t{
+                    //     pointOnUnitCube.x * pointOnUnitCube.x,
+                    //     pointOnUnitCube.y * pointOnUnitCube.y,
+                    //     pointOnUnitCube.z * pointOnUnitCube.z
+                    // };
+                    // const v3 pointOnUnitSphere{
+                    //     pointOnUnitCube.x * sqrt(1.0f - (t.y + t.z) / 2.0f + (t.y * t.z) / 3),
+                    //     pointOnUnitCube.y * sqrt(1.0f - (t.z + t.x) / 2.0f + (t.z * t.x) / 3),
+                    //     pointOnUnitCube.z * sqrt(1.0f - (t.x + t.y) / 2.0f + (t.x * t.y) / 3)
+                    // };
+                    // position = pointOnUnitSphere;
+                    position = v3{ localUp_ + (percent.x - 0.5f) * 2.0f * axisA_ + (percent.y - 0.5f) * 2.0f * axisB_ };
+                    // normal = glm::normalize(pointOnUnitSphere);
 
                     if (x != resolution_ && y != resolution_) {
                         indices[triIndex++] = i;
-                        indices[triIndex++] = i + resolution_ + 2;
-                        indices[triIndex++] = i + resolution_ + 1;
-
-                        indices[triIndex++] = i;
                         indices[triIndex++] = i + 1;
                         indices[triIndex++] = i + resolution_ + 2;
+                        indices[triIndex++] = i + resolution_ + 1;
                     }
                 }
             }
 
             mesh_.create();
+
         }
 
         inline void draw() const {
-            mesh_.draw();
+            mesh_.vao_.bind();
+            glDrawElements(GL_PATCHES, mesh_.indexCount_, GL_UNSIGNED_INT, nullptr);
+            mesh_.vao_.unbind();
+            // mesh_.draw();
         }
     };
 
@@ -98,6 +100,7 @@ struct Planet final {
         for (u32 i{ 0 }; i < 6; ++i) {
             terrainFaces_[i].create(directions[i], resolution_);
         }
+        glPatchParameteri(GL_PATCH_VERTICES, 4);
     }
 
     inline void draw() const {

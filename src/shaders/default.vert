@@ -53,5 +53,8 @@ void main() {
     const float height = 6378.137f + texture(tex0, pointOnASphereToUV(aPos)).r * 8.848f * 20;
 
     gl_Position = camera.projection * camera.view * vec4(aPos + normalize(aPos) * height, 1);
+    // gl_Position = camera.projection * camera.view * vec4(aPos, 1);
+
+
 }
 
