@@ -46,9 +46,9 @@ vec3 displaced(vec3 p, float amount) {
 }
 
 const int MIN_TES = 1;
-const int MAX_TES = 32;
+const int MAX_TES = 64;
 const float MIN_DIST = 0;
-const float MAX_DIST = 1000;
+const float MAX_DIST = 1500;
 
 void main() {
     gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;

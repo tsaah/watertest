@@ -25,11 +25,16 @@ struct Coord final {
 
 struct Planet final {
     struct Face final {
-        Mesh mesh_;
+        std::vector<v3> positions_;
+        std::vector<u32> indices_;
+        u32 indexCount_{ 0 };
         u32 resolution_{ 1 };
         v3 localUp_;
         v3 axisA_;
         v3 axisB_;
+        VertexArrayObject vao_;
+        Buffer<v3> vbo_;
+        Buffer<u32> ibo_;
 
         inline void create(v3 localUp, int resolution = 1) {
             resolution_ = std::max(resolution, 1);
@@ -37,52 +42,42 @@ struct Planet final {
             axisA_ = v3{ localUp.y, localUp.z, localUp.x };
             axisB_ = glm::cross(localUp, axisA_);
 
-            mesh_.vertices.resize((resolution_ + 1) * (resolution_ + 1));
-
-            auto& indices = mesh_.indices;
-            indices.resize(resolution_ * resolution_ * 6);
+            positions_.resize((resolution_ + 1) * (resolution_ + 1));
+            indices_.resize(resolution_ * resolution_ * 6);
+            indexCount_ = indices_.size();
 
             u32 triIndex{ 0 };
 
             for (int y{ 0 }; y <= resolution_; ++y) {
                 for (int x{ 0 }; x <= resolution_; ++x) {
                     const auto i = x + y * (resolution_ + 1);
-                    auto& position = mesh_.vertices[i].position;
-                    // auto& normal = mesh_.vertices[i].normal;
                     const v2 percent{ v2{ x, y } / static_cast<f32>(resolution_) };
-                    // const v3 pointOnUnitCube{ localUp_ + (percent.x - 0.5f) * 2.0f * axisA_ + (percent.y - 0.5f) * 2.0f * axisB_ };
-                    // const v3 t{
-                    //     pointOnUnitCube.x * pointOnUnitCube.x,
-                    //     pointOnUnitCube.y * pointOnUnitCube.y,
-                    //     pointOnUnitCube.z * pointOnUnitCube.z
-                    // };
-                    // const v3 pointOnUnitSphere{
-                    //     pointOnUnitCube.x * sqrt(1.0f - (t.y + t.z) / 2.0f + (t.y * t.z) / 3),
-                    //     pointOnUnitCube.y * sqrt(1.0f - (t.z + t.x) / 2.0f + (t.z * t.x) / 3),
-                    //     pointOnUnitCube.z * sqrt(1.0f - (t.x + t.y) / 2.0f + (t.x * t.y) / 3)
-                    // };
-                    // position = pointOnUnitSphere;
-                    position = v3{ localUp_ + (percent.x - 0.5f) * 2.0f * axisA_ + (percent.y - 0.5f) * 2.0f * axisB_ };
-                    // normal = glm::normalize(pointOnUnitSphere);
+                    const v3 pointOnUnitCube{ localUp_ + (percent.x - 0.5f) * 2.0f * axisA_ + (percent.y - 0.5f) * 2.0f * axisB_ };
+                    positions_[i] = pointOnUnitCube;
 
                     if (x != resolution_ && y != resolution_) {
-                        indices[triIndex++] = i;
-                        indices[triIndex++] = i + 1;
-                        indices[triIndex++] = i + resolution_ + 2;
-                        indices[triIndex++] = i + resolution_ + 1;
+                        indices_[triIndex++] = i;
+                        indices_[triIndex++] = i + 1;
+                        indices_[triIndex++] = i + resolution_ + 2;
+                        indices_[triIndex++] = i + resolution_ + 1;
                     }
                 }
             }
 
-            mesh_.create();
+            vbo_.create(positions_);
+            ibo_.create(indices_);
+            vao_.create();
+            vao_.setVertexBuffer(vbo_, 0);
+            vao_.setIndexBuffer(ibo_);
+            vao_.setF32Attribute(0, 0, GL_FLOAT, 3, 0);
+
 
         }
 
         inline void draw() const {
-            mesh_.vao_.bind();
-            glDrawElements(GL_PATCHES, mesh_.indexCount_, GL_UNSIGNED_INT, nullptr);
-            mesh_.vao_.unbind();
-            // mesh_.draw();
+            vao_.bind();
+            glDrawElements(GL_PATCHES, indexCount_, GL_UNSIGNED_INT, nullptr);
+            vao_.unbind();
         }
     };
 
@@ -100,10 +95,11 @@ struct Planet final {
         for (u32 i{ 0 }; i < 6; ++i) {
             terrainFaces_[i].create(directions[i], resolution_);
         }
-        glPatchParameteri(GL_PATCH_VERTICES, 4);
+
     }
 
     inline void draw() const {
+        glPatchParameteri(GL_PATCH_VERTICES, 4);
         for (const auto& face: terrainFaces_) {
             face.draw();
         }
